@@ -69,6 +69,6 @@ plt.ylabel('Total Gain applied (dB)')
 plt.ylim(48,120)
 
 plt.grid()  
-plt.title("Echologger TVG function: K=" + str(K) + ' Gain='+ str(gain_sel) +
-          ' alpha=' + str(alpha) + ' r_spread=' + str(r_spread) + ' max TVG = '+str(max_TVG_gain_200) +'/'+str(max_TVG_gain_30)) 
+plt.title("K=" + str(K) + ' Gain='+ str(gain_sel) +
+          ' alpha=' + str(alpha) + ' r_spread=' + str(r_spread_200)+ '/' +str(r_spread_30) + ' max TVG = '+str(max_TVG_gain_200) +'/'+str(max_TVG_gain_30)) 
 plt.legend() 
