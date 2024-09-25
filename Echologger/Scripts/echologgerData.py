@@ -181,8 +181,7 @@ class echologgerData():
                 cur_pos+=packetLength
 
         # Convert lists to np arrays
-        self.allPings, self.range, self.Time, self.pingNo, self.temp, self.alt, self.pitch, self.roll, self.frequency = 
-            [np.asarray(x) for x in [self.allPings, self.range, self.Time, self.pingNo, self.temp, self.alt, self.pitch, self.roll, self.frequency]]
+        self.allPings, self.range, self.Time, self.pingNo, self.temp, self.alt, self.pitch, self.roll, self.frequency = [np.asarray(x) for x in [self.allPings, self.range, self.Time, self.pingNo, self.temp, self.alt, self.pitch, self.roll, self.frequency]]
         
         # Set the file type
         self.fileFmt = 'bin'
