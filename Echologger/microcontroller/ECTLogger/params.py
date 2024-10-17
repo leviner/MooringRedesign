@@ -2,7 +2,9 @@ class params():
     # Deployment name, used for the log file and data file prefix
     deployment = 'GOA2025'
     # Log file name, if not using SD card modify here
-    log_file = '/sd/'+deployment+'.log'
+    log_file = '/'+deployment+'.log'
+    # The file we will use to hold the counter
+    ct_file = '/count.txt'
     # Ping configurations, see ECT D032 manual for details
     config = {'C1':{"IdTxLengthL":"1000",
                     "IdTxLengthH":"500",
@@ -23,6 +25,6 @@ class params():
     # End time of the mission
     end_time = (2024,10,30,00,00,00,00,-1,-1)
     # If not 1 or 60, is the time relative to the last wakeup
-    wakeup_interval = 5 # Alarm interval in minutes
+    wakeup_interval = 3 # Alarm interval in minutes
     # Minimum voltage for use in the 
     minimum_voltage = 10.5
