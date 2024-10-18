@@ -11,25 +11,20 @@ except: # If we fail to start up, just go back to sleep using the 'no clock' wai
     alarm.exit_and_deep_sleep_until_alarms(time_alarm)
 
 # If the microcontroller setup correctly, try to wake the ect
-if rp.wakeup_flag == 0:
+if rp.status_flag == 0:
     rp.setup_ect()
 
 # If we still have no errors, try to connect
-attempts = 0
-if rp.wakeup_flag == 0:
-    while attempts <3: # Make 3 attempts
-        a = rp.connect_ect() # try to connect, return the flag (1 is connected, -1 is not)
-        if a == 1: # if connected, break
-            break
-        else: # otherwise wait a walk second and try again
-            time.sleep(0.5)
+
+if rp.status_flag == 0:
+    a = rp.connect_ect() # try to connect, return the flag (1 is connected, -1 is not)
 
 # If we were able to connect, run the 'mission'
-if rp.wakeup_flag == 0:
+if rp.status_flag == 0:
     rp.run_ect()
 
 # DELETE: FOR BENCH TESTING
-if rp.wakeup_flag ==1:
+if rp.status_flag ==1:
     for i in range(5):
         rp.pixel.brightness = 0.5
         rp.pixel[0] = (0,10,0)

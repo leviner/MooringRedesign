@@ -28,3 +28,5 @@ class params():
     wakeup_interval = 3 # Alarm interval in minutes
     # Minimum voltage for use in the 
     minimum_voltage = 10.5
+    #
+    max_connect_attempts = 4
