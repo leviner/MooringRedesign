@@ -15,25 +15,12 @@ if rp.status_flag == 0:
     rp.setup_ect()
 
 # If we still have no errors, try to connect
-
 if rp.status_flag == 0:
     a = rp.connect_ect() # try to connect, return the flag (1 is connected, -1 is not)
 
 # If we were able to connect, run the 'mission'
 if rp.status_flag == 0:
     rp.run_ect()
-
-# DELETE: FOR BENCH TESTING
-if rp.status_flag ==1:
-    for i in range(5):
-        rp.pixel.brightness = 0.5
-        rp.pixel[0] = (0,10,0)
-        time.sleep(0.5)
-else:
-    for i in range(2):
-        rp.pixel.brightness = 0.5
-        rp.pixel[0] = (10,0,0)
-        time.sleep(0.5)
     
 # Close log, set timer and go to sleep
 rp.to_sleep()

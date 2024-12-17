@@ -3,7 +3,7 @@ import time
 import random
 
 class Echosounder():
-    def __init__(self,uart,pixels):
+    def __init__(self,uart,pixels, led=False):
         self._serial_port = uart
         self._is_running = False
         self._is_detected = False
@@ -11,6 +11,7 @@ class Echosounder():
         self._command_result = ""
         self._is_detected = self.Detect()
         self._pixels = pixels
+        self.led = led
         
         self._sonarcommands = [
     ( "IdInfo",            "#info",       "",      ""),
@@ -100,7 +101,6 @@ class Echosounder():
 
                 if 1 != self.__SendCommandResponseCheck():
                     result = False
-                    print('tried')
                 else:
                     self.__WaitCommandPrompt(1000)
                     result = True
@@ -230,9 +230,11 @@ class Echosounder():
     
     def recordPings(self, outputFile, numPings=10, maxTime=10):
         time_begin = time.time()
-        self._pixels[0] = (10, 10, 0)
-    
+        if self.led == True:
+            self._pixels[0] = (10, 10, 0)
+        print('trying to open file')
         with open(outputFile, "wb") as binary_file:
+            print('file open ', time.time()-time_begin)
             ping = 0
             self._serial_port.write('#go\r\n')
             time.sleep(0.05)
@@ -245,7 +247,8 @@ class Echosounder():
                     binary_file.write(input)
                     if b'ECHOLOGG' in input:
                         ping+=1
-                        self._pixels[0] = (random.randrange(0,255),random.randrange(0,255),random.randrange(0,255))
+                        if self.led == True:
+                            self._pixels[0] = (random.randrange(0,255),random.randrange(0,255),random.randrange(0,255))
                         print('Echo detected, ping ',ping)
                         
                         
@@ -264,9 +267,11 @@ class Echosounder():
         binary_file.close()
     
     def recordInfo(self,outputFile):
+        time_begin = time.time()
         self.__GetEchosounderInfo()
-            
+        print('trying to open info file')
         with open(outputFile,'w') as file:
+            print('info file open ', time.time()-time_begin)
             for line in self._info_lines:
                 if len(line) > 0:
                     file.write(line+'\r')

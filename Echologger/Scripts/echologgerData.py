@@ -85,17 +85,17 @@ class echologgerData():
         self.range = np.asarray(self.range)
         self.fileFmt = 'txt' # set the file format
 
-    def echogram(self,log=True):
+    def echogram(self,log=True,freq=30):
         '''
         Quick and dirty echogram plot
         '''
         fig = plt.figure()
         if log:
-            C =np.log10(self.allPings.T)
+            C =np.log10(self.allPings[self.frequency==freq*1000].T)
         else:
-            C = self.allPings.T
+            C = self.allPings[self.frequency==freq*1000].T
         
-        plt.pcolormesh(self.Time,self.range[0],C)
+        plt.pcolormesh(self.Time[self.frequency==freq*1000],self.range[self.frequency==freq*1000][0],C)
         plt.gca().invert_yaxis()
         plt.ylabel('Range')
         plt.xlabel('Time')

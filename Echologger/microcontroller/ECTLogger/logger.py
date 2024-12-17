@@ -24,8 +24,13 @@ class rp2040_logger():
         self.status_flag = 0
         self.pixel = neopixel.NeoPixel(board.NEOPIXEL, 1,brightness = .5)
         self.params = params
+        
         self.initiate_logger()
-        flashpixel(self.pixel,3,(10,10,10))
+        
+        self.get_file_counter()
+            
+        if self.LED_wakeup:
+            flashpixel(self.pixel,3,(10,10,10))
 
         self.i2c_pwr()
         time.sleep(.05)
@@ -39,23 +44,26 @@ class rp2040_logger():
         
         try:
             self.mount_sd()
+            if self.LED_wakeup:
+                flashpixel(self.pixel,3,(0,10,10))
         except:
             self.status_flag = 5
             print('Unable to mount SD, sleep')
             self.to_sleep()
-        
+            
+        # 16 DEC 2024 RML: THIS IS BEING SKIPPED FOR THIS DEPLOYMENT
         # First check that we woke up during the time we're supposed to be collecting data
-        if (self.start_time-time.mktime(time.struct_time(self.params.start_time))) < 0:
-            #if the value is negative, it means we haven't hit the start time yet
-            self.status_flag = 2
-        if (time.mktime(time.struct_time(params.end_time))-self.start_time) < 0:
-            #if the value is negative, it means we passed the end time
-            self.status_flag = 3
+        #if (self.start_time-time.mktime(time.struct_time(self.params.start_time))) < 0:
+        #    #if the value is negative, it means we haven't hit the start time yet
+        #    self.status_flag = 2
+        #if (time.mktime(time.struct_time(params.end_time))-self.start_time) < 0:
+        #    #if the value is negative, it means we passed the end time
+        #    self.status_flag = 3
 
     def i2c_pwr(self):
         try:
             # Power on the i2c peripherals via a GPIO
-            pwr_i2c = digitalio.DigitalInOut(board.D12)
+            pwr_i2c = digitalio.DigitalInOut(board.D9)
             pwr_i2c.direction = digitalio.Direction.OUTPUT
             pwr_i2c.value = True
             self.i2c = board.I2C()
@@ -80,11 +88,13 @@ class rp2040_logger():
             self.rtc_ext = adafruit_ds3231.DS3231(self.i2c)
             self.rtc_ext_exist = True
             self.rtc_int.datetime = self.rtc_ext.datetime
-            flashpixel(self.pixel,5,(0,10,0))
+            if self.LED_wakeup:
+                flashpixel(self.pixel,5,(0,0,10))
         except:
             self.rtc_ext_exist = False
             self.logger.warning('No External RTC, proceeding')
-            flashpixel(self.pixel,5,(0,0,10))
+            if self.LED_wakeup:
+                flashpixel(self.pixel,5,(10,10,0))
         self.start_time = time.mktime(self.rtc_int.datetime)
         self.start_time_monotonic = math.floor(time.monotonic())
         offset = self.start_time%60
@@ -98,6 +108,11 @@ class rp2040_logger():
         sdcard = adafruit_sdcard.SDCard(sd_spi, cs)
         vfs = storage.VfsFat(sdcard)
         storage.mount(vfs, "/sd")
+        print('mount sd ',time.monotonic()-self.start_time_monotonic)
+        
+        self.file_subdir = str(int(self.file_ct/100))
+        if self.file_ct%100 == 0:
+            os.mkdir('/sd/'+self.file_subdir)
 
     def initiate_logger(self):
         storage.remount('/',readonly=False)
@@ -117,24 +132,36 @@ class rp2040_logger():
                 ct_file.write(str(self.file_ct))
             ct_file.close()
         except:
+            # There is no count file, so this will be our test
             with open(self.params.ct_file, 'w') as ct_file:
                 ct_file.write('0')
             ct_file.close()
             self.file_ct = 0
-        
+            
+        self.LED_wakeup = False
+        self.test_wakeup = False
+        if self.file_ct < int(self.params.LED_wakeup_days*24*60)/self.params.wakeup_interval:
+            self.LED_wakeup = True
+        if self.file_ct < int(self.params.test_wakeup_days*24*60)/self.params.wakeup_interval:
+            self.test_wakeup = True
 
     def setup_ect(self):
         #***Turn on the ECT***
         # Initiate the uart
+        pwr_uart = digitalio.DigitalInOut(board.D10)
+        pwr_uart.direction = digitalio.Direction.OUTPUT
+        pwr_uart.value = True
+        time.sleep(1)
         self.uart = busio.UART(board.TX, board.RX, baudrate=115200,timeout=.1,receiver_buffer_size=16448)
         # ADD: Power on the ECT by gorunding the MOSFET
-        self.pwr_ect = digitalio.DigitalInOut(board.D10) # Set the D10 pin as the grounding pin
+        self.pwr_ect = digitalio.DigitalInOut(board.D11) # Set the D11 pin as the grounding pin
         self.pwr_ect.direction = digitalio.Direction.OUTPUT # Set to output
         self.pwr_ect.value = False # Immediately make sure it is off
         time.sleep(1)
         self.pwr_ect.value = True # Turn it on and wait before trying to connect
         time.sleep(2)
         self.logger.info(self.file_datetime+' - C:'+str(self.ina260.current)) # DELETE
+        print('ect on ',time.monotonic()-self.start_time_monotonic)
 
         # Check the voltage once the ECT is powered
         if self.ina260.voltage < params.minimum_voltage:
@@ -143,46 +170,53 @@ class rp2040_logger():
             self.status_flag = 4
         
     def connect_ect(self):
-            # If it should have enough juice....
-            # Try to connect, which will also make sure we stop it from pinging if it turned on
-            if self.pwr_ect.value == False:
-                time.sleep(1)
-                self.pwr_ect.value = True # Turn it on and wait before trying to connect
-                time.sleep(2)
-            attempts = 0  
-            while attempts <= self.params.max_connect_attempts:
+        # If it should have enough juice....
+        # Try to connect, which will also make sure we stop it from pinging if it turned on
+        if self.pwr_ect.value == False:
+            time.sleep(1)
+            self.pwr_ect.value = True # Turn it on and wait before trying to connect
+            time.sleep(2)
+        attempts = 0  
+        while attempts <= self.params.max_connect_attempts:
+            print(attempts)
+            try:
+                self.ect = echo.Echosounder(self.uart,self.pixel,led=False)
                 try:
-                    self.ect = echo.Echosounder(self.uart,self.pixel)
-                    try:
-                        self.ect.Detect()
-                    except:
-                        self.ect.Detect()
-                    self.ect.SetValue("IdTime",str(int(time.mktime(self.rtc_int.datetime))))
-                    self.status_flag = 0
-                    return 1
+                    self.ect.Detect()
                 except:
-                    self.status_flag = -1
-                    
-            self.pwr_ect.value = False
-            return -1
+                    self.ect.Detect()
+                self.ect.SetValue("IdTime",str(int(time.mktime(self.rtc_int.datetime))))
+                self.status_flag = 0
+                return 1
+            except:
+                self.status_flag = -1
+            attempts +=1
+                
+        self.pwr_ect.value = False
+        return -1
 
     def run_ect(self):
-        self.get_file_counter()
         # Collect the data files
         for k in self.params.config.keys(): # for each configuration
             # iterate through the config settings and set the values
             for item in self.params.config[k].items(): 
                 self.ect.SetValue(item[0],item[1])
                 time.sleep(0.05)
+            print('config set ',time.monotonic()-self.start_time_monotonic)
             
             # Assign the basename to use for all files with the same configuration
-            file_basename = '/sd/'+self.params.deployment+'_'+self.file_datetime+'_'+k+'_'+str(self.file_ct)
-
+            file_basename = '/sd/'+self.file_subdir+'/'+self.params.deployment+'_'+self.file_datetime+'_'+k+'_'+str(self.file_ct)
+            
+            print(file_basename)
             # Dump out the 'info' into a text file
             self.ect.recordInfo(file_basename+'.txt')
             
             # record
-            self.ect.recordPings(file_basename+'.bin',numPings=self.params.numPings[k], maxTime=self.params.maxTime[k])
+            if self.test_wakeup:
+                self.ect.recordPings(file_basename+'.bin',numPings=2, maxTime=5)
+                self.test_file = file_basename+'.bin'
+            else:
+                self.ect.recordPings(file_basename+'.bin',numPings=self.params.numPings[k], maxTime=self.params.maxTime[k])
 
         # Turn the power back off
         self.pwr_ect.value = False
@@ -210,19 +244,41 @@ class rp2040_logger():
         self.file_handler.close()
         
         # go to sleep
-        if self.status_flag == 1:
-            flashpixel(self.pixel,3,(0,10,0))
-        elif self.status_flag == -1:
-            flashpixel(self.pixel,3,(10,0,0))
-        else:
-           flashpixel(self.pixel,3,(10,10,0))
-            
+        if self.LED_wakeup:
+            if self.status_flag == 1:
+                flashpixel(self.pixel,5,(0,10,0))
+            elif self.status_flag == -1:
+                flashpixel(self.pixel,5,(10,0,0))
+            else:
+               flashpixel(self.pixel,5,(10,10,0))
+        
+        
+        if self.test_wakeup & self.LED_wakeup:
+            if self.status_flag == 1:
+                if os.stat(self.test_file)[0]:
+					time.sleep(2)
+                    flashpixel(self.pixel,5, (0,10,0))
+                    time.sleep(2)
+                    flashpixel(self.pixel,5, (0,10,0))
+                    time.sleep(2)
+                    flashpixel(self.pixel,5, (0,10,0))
+                
         self.pixel.brightness = 0
         if self.status_flag == 3:
             pin_alarm = alarm.pin.PinAlarm(pin=board.D11, value=False, pull=True) # use a pin that it will never be used
             alarm.exit_and_deep_sleep_until_alarms(pin_alarm)
         else:
-            time_alarm = alarm.time.TimeAlarm(monotonic_time = self.start_time_monotonic+(self.params.wakeup_interval*60))
+            start_time_struct = time.localtime(self.start_time)
+            Y,M,D,hh,mm,ss = start_time_struct[0],start_time_struct[1],start_time_struct[2],start_time_struct[3],start_time_struct[4],start_time_struct[5]
+            newmin = mm-mm%self.params.wakeup_interval+self.params.wakeup_interval
+            if newmin < 60:
+                Y,M,D,hh,mm,ss = Y,M,D,hh,newmin,00
+            else:
+                Y,M,D,hh,mm,ss = Y,M,D,math.ceil(hh+(self.params.wakeup_interval/60)),newmin%60,00
+            next_wakeup = time.mktime((Y,M,D,hh,mm,ss,0,0,0))
+            wakeup_offset = next_wakeup-self.start_time
+            
+            time_alarm = alarm.time.TimeAlarm(monotonic_time = self.start_time_monotonic+wakeup_offset)
             alarm.exit_and_deep_sleep_until_alarms(time_alarm)
             # check if wakeup is later than now or less than some buffer, add interval until it's more than buffer
 
