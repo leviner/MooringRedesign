@@ -226,7 +226,12 @@ class Echosounder():
         self._serial_port.write('#go\r\n')
         time.sleep(0.05)
         self._serial_port.read()
+        time.sleep(.5)
+        self._serial_port.write('#setfd\r\n')
+        time.sleep(0.05)
+        self._serial_port.read()
         self._is_running = True
+        
     
     def recordPings(self, outputFile, numPings=10, maxTime=10):
         time_begin = time.time()

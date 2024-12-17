@@ -1,7 +1,7 @@
 class params():
     
     # Deployment name, used for the log file and data file prefix
-    deployment = 'G25'
+    deployment = 'GOA25'
     
     # Log file name
     log_file = '/'+deployment+'.log'
@@ -10,27 +10,63 @@ class params():
     ct_file = '/count.txt'
     
     # Ping configurations, see ECT D032 manual for details
-    config = {'C1':{"IdTxLengthL":"1000",
-                    "IdTxLengthH":"500",
-                    "IdRangeL": "80000",
-                    "IdRangeH": "80000",
-                    "IdOutput": "100"},
-              'C2':{"IdTxLengthL":"1000",
-                    "IdTxLengthH":"500",
-                    "IdRangeL": "80000",
-                    "IdRangeH": "80000",
-                    "IdOutput": "100"},
-              'C3':{"IdTxLengthL":"1000",
-                    "IdTxLengthH":"500",
-                    "IdRangeL": "80000",
-                    "IdRangeH": "80000",
-                    "IdOutput": "100"}}
+    config = {'C1':{"IdTxLengthL": "500",
+                  "IdTxLengthH": "500",
+                  "IdRangeL": "80000",
+                  "IdRangeH": "80000",
+                  "IdOutput": "100",
+                  "IdSamplFreq": "12500",
+                  "IdInterval": "1",
+                  "IdSound": "1466",
+                  "IdTVGMode": "3",
+                  "IdTVGSprdL": "0",
+                  "IdTVGSprdH": "0",
+                  "IdTVGAbsL": "0.0",
+                  "IdTVGAbsH": "0.0",
+                  "IdGainL": "15",
+                  "IdGainH": "20",
+                  "IdAttnL": "0",
+                  "IdAttnH": "0"},
+            'C2':{"IdTxLengthL": "500",
+                  "IdTxLengthH": "500",
+                  "IdRangeL": "80000",
+                  "IdRangeH": "80000",
+                  "IdOutput": "100",
+                  "IdSamplFreq": "12500",
+                  "IdInterval": "1",
+                  "IdSound": "1466",
+                  "IdTVGMode": "3",
+                  "IdTVGSprdL": "0",
+                  "IdTVGSprdH": "0",
+                  "IdTVGAbsL": "0.0",
+                  "IdTVGAbsH": "0.0",
+                  "IdGainL": "37.5",
+                  "IdGainH": "40",
+                  "IdAttnL": "0",
+                  "IdAttnH": "0"},
+            'C3':{"IdTxLengthL": "500",
+                  "IdTxLengthH": "500",
+                  "IdRangeL": "80000",
+                  "IdRangeH": "80000",
+                  "IdOutput": "100",
+                  "IdSamplFreq": "12500",
+                  "IdInterval": "1",
+                  "IdSound": "1466",
+                  "IdTVGMode": "3",
+                  "IdTVGSprdL": "0",
+                  "IdTVGSprdH": "0",
+                  "IdTVGAbsL": "0.0",
+                  "IdTVGAbsH": "0.0",
+                  "IdGainL": "60",
+                  "IdGainH": "60",
+                  "IdAttnL": "0",
+                  "IdAttnH": "0"}}
     
     # Number of pings for each ensemble
-    numPings = {'C1':10,'C2':10,'C3':10}
+    numPings = {'C1':30,'C2':30,'C3':30}
     
     # Maximum time (s) allowed for each ensemble
-    maxTime =  {'C1':40,'C2':40,'C3':40}
+    maxTime =  {'C1':45,'C2':45,'C3':45}
     
     # Relative to the hour (00:00), i.e., '5' means wakeup at
     # 00:05, 00:10, 00:15..., '120' means wakeup at 00:00, 02:00, 04:00...
