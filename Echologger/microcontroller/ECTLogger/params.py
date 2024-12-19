@@ -63,10 +63,10 @@ class params():
                   "IdAttnH": "0"}}
     
     # Number of pings for each ensemble
-    numPings = {'C1':30,'C2':30,'C3':30}
+    numPings = {'C1':60,'C2':60,'C3':60}
     
     # Maximum time (s) allowed for each ensemble
-    maxTime =  {'C1':45,'C2':45,'C3':45}
+    maxTime =  {'C1':60,'C2':60,'C3':60}
     
     # Relative to the hour (00:00), i.e., '5' means wakeup at
     # 00:05, 00:10, 00:15..., '120' means wakeup at 00:00, 02:00, 04:00...

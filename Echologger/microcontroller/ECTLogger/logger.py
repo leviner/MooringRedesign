@@ -44,8 +44,6 @@ class rp2040_logger():
         
         try:
             self.mount_sd()
-            if self.LED_wakeup:
-                flashpixel(self.pixel,3,(5,0,5))
         except:
             self.status_flag = 5
             print('Unable to mount SD, sleep')
