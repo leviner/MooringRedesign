@@ -76,7 +76,7 @@ class params():
     minimum_voltage = 10.25
     
     # Maximum attempts to connect to ECT before aborting wakeup
-    max_connect_attempts = 5
+    max_connect_attempts = 20 # This was updated for battery/fet issues
     
     # Time period for reduced ping test wakeup in days
     test_wakeup_days = 1

@@ -189,6 +189,7 @@ class rp2040_logger():
             except:
                 self.status_flag = -1
             attempts +=1
+            time.sleep(2) # This was added for battery/fet issue
                 
         self.pwr_ect.value = False
         return -1
